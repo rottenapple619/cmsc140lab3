@@ -69,8 +69,14 @@ public class PeerConnection extends Node{
     }
 
     
-    void openObjSender(int rID, int rPORT, int fID) {
-        FileObj file = this.getFilesToPublish().getFile(fID);
+    void openObjSender(String type,int rID, int rPORT, int fID) {
+        FileObj file = null;
+        if(type.equalsIgnoreCase(Messages.RETRIEVE)){
+            file = this.getFilesInNetwork().copyFile(fID);
+        }
+        else if(type.equalsIgnoreCase(Messages.PUBLISH)){
+            file = this.getFilesToPublish().getFile(fID);
+        }
         objSender = new ObjSender(this, rID, rPORT, file);
         objSender.startSending();
     }

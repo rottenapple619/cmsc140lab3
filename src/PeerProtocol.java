@@ -126,7 +126,10 @@ public class PeerProtocol implements Messages{
 
             
         }
-        if(msg[0].equalsIgnoreCase(PUBLISH)){
+        /*
+            Received PUBLISH Message
+        */
+        else if(msg[0].equalsIgnoreCase(PUBLISH)){
             int netID = Integer.parseInt(msg[1]);
             int netPORT = Integer.parseInt(msg[2]);
             
@@ -137,7 +140,7 @@ public class PeerProtocol implements Messages{
             
             PeerConnection peer = Connections.getConnection().getPeerConnection(netID);
             
-            if(peer.getPredecessorID() == 0){ //initiator in initial state
+            if(peer.getPredecessorID() == 0){ //P2P Network in initial state
                 peer.getOutgoing().send(TELLPUBLISHER 
                     +REGEX+netID                //network id
                     +REGEX+netPORT
@@ -146,7 +149,7 @@ public class PeerProtocol implements Messages{
                     +REGEX+fileID,              //file ID
                     InetAddress.getLocalHost(), publisherPORT);
             }
-            else{//initiator in populated state
+            else{//P2P Network in populated state
                 if((fileID > peer.getID() && fileID <= peer.getSuccessorID()) //amazing Lyle
                     || (peer.getID() > peer.getSuccessorID() && (fileID > peer.getID() || fileID < peer.getSuccessorID()))){
                     peer.getOutgoing().send(TELLPUBLISHER 
@@ -170,7 +173,7 @@ public class PeerProtocol implements Messages{
                 } 
             }
         }
-        if(msg[0].equalsIgnoreCase(TELLPUBLISHER)){
+        else if(msg[0].equalsIgnoreCase(TELLPUBLISHER)){
             int netID = Integer.parseInt(msg[1]);
             int netPORT = Integer.parseInt(msg[2]);
             
@@ -186,7 +189,7 @@ public class PeerProtocol implements Messages{
                         +"\nFileID: "+fileID
                         +"\nFile Keeper: "+receiverID+"@"+receiverPORT);
                 System.out.println();
-                peer.openObjSender(receiverID,receiverPORT,fileID);
+                peer.openObjSender("PUBLISH",receiverID,receiverPORT,fileID);
                 
             }
             else{
@@ -197,8 +200,9 @@ public class PeerProtocol implements Messages{
                 System.out.println();
                 FileObj f = peer.getFilesToPublish().getFile(fileID);
                 peer.getFilesInNetwork().addToList(f);
-                Connections.getConnection().getMulticastConnection().getOutgoing().send(Messages.PUBLISH
-                    +Messages.REGEX+peer.getID()
+                
+                Connections.getConnection().getMulticastConnection().getOutgoing().send(Messages.PUBLISH//broadcast to multicast that a file has been
+                    +Messages.REGEX+peer.getID()                                                        //published
                     +Messages.REGEX+peer.getPort()
                     +Messages.REGEX+peer.getInitiatorID()
                     +Messages.REGEX+peer.getInitiatorPort()
@@ -207,7 +211,7 @@ public class PeerProtocol implements Messages{
             }
             
         }
-        if(msg[0].equalsIgnoreCase(READYTOPUBLISH)){
+        else if(msg[0].equalsIgnoreCase(READYTOPUBLISH)){
             int netID = Integer.parseInt(msg[1]);
             int netPORT = Integer.parseInt(msg[2]);
             
@@ -220,7 +224,7 @@ public class PeerProtocol implements Messages{
             PeerConnection peer = Connections.getConnection().getPeerConnection(netID);
             peer.openObjReceiver(senderID,senderPORT,objPORT); 
         }
-        if(msg[0].equalsIgnoreCase(DELETE)){
+        else if(msg[0].equalsIgnoreCase(DELETE)){
             int netID = Integer.parseInt(msg[1]);
             int netPORT = Integer.parseInt(msg[2]);
             
@@ -272,7 +276,7 @@ public class PeerProtocol implements Messages{
                     InetAddress.getLocalHost(), peer.getSuccessorPort());
             }
         }
-        if(msg[0].equalsIgnoreCase(SUCCESSDELETE)){
+        else if(msg[0].equalsIgnoreCase(SUCCESSDELETE)){
             int netID = Integer.parseInt(msg[1]);
             int netPORT = Integer.parseInt(msg[2]);
             
@@ -291,7 +295,7 @@ public class PeerProtocol implements Messages{
                     +"\nMessage from: "+senderID+"@"+senderPORT);
             System.out.println();
         }
-        if(msg[0].equalsIgnoreCase(FAILDELETE)){
+        else if(msg[0].equalsIgnoreCase(FAILDELETE)){
             int netID = Integer.parseInt(msg[1]);
             int netPORT = Integer.parseInt(msg[2]);
             
@@ -308,7 +312,7 @@ public class PeerProtocol implements Messages{
                     +"\nMessage from: "+senderID+"@"+senderPORT);
             System.out.println();
         }
-        if(msg[0].equalsIgnoreCase(FILESNETWORK)){
+        else if(msg[0].equalsIgnoreCase(FILESNETWORK)){
             int netID = Integer.parseInt(msg[1]);
             int netPORT = Integer.parseInt(msg[2]);
             
@@ -413,7 +417,7 @@ public class PeerProtocol implements Messages{
 //            }
             
         }
-        if(msg[0].equalsIgnoreCase(FILE)){
+        else if(msg[0].equalsIgnoreCase(FILE)){
             int netID = Integer.parseInt(msg[1]);
             int netPORT = Integer.parseInt(msg[2]);
             
@@ -429,6 +433,60 @@ public class PeerProtocol implements Messages{
                             +" Filename: "+fileName
                             +" Kept by: "+senderID+"@"+senderPORT);
         }
+        
+        else if(msg[0].equalsIgnoreCase(Messages.RETRIEVE)){
+            int netID = Integer.parseInt(msg[1]);
+            int netPORT = Integer.parseInt(msg[2]);
+            
+            int requestID  = Integer.parseInt(msg[3]); //address or ID of the one who retrieves the file
+            int requestPORT = Integer.parseInt(msg[4]);
+            
+            int fileID = Integer.parseInt(msg[5]);
+            
+            PeerConnection peer = Connections.getConnection().getPeerConnection(netID);
+            
+            if(peer.getPredecessorID() == 0){ //P2P Network in initial state
+                FileObj f;
+                if((f = peer.getFilesInNetwork().copyFile(fileID))==null){
+                        System.err.println("File not found!");
+                } 
+                else {
+                    System.out.println();
+                    System.out.println("FILE KEEPER FOUND FOR THE P2P NETWORK: "+netID+"@"+netPORT
+                            +"\nFileID: "+fileID
+                            +"\nFilename : '"+f.getName()
+                            +"\nFile Keeper: "+peer.getID()+"@"+peer.getPort()+"(You)");
+                    System.out.println();
+                    Connections.getConnection().getLocalFiles().addToList(f);
+                    System.out.println("'"+f.getName()+"' has been retrieved and saved to local files.");
+                }
+            }
+            else{//P2P Network in populated state
+                if((fileID > peer.getID() && fileID <= peer.getSuccessorID()) //amazing Lyle
+                    || (peer.getID() > peer.getSuccessorID() && (fileID > peer.getID() || fileID < peer.getSuccessorID()))){
+                    peer.openObjSender("RETRIEVE",requestID,requestPORT,fileID);
+                    /*peer.getOutgoing().send(INIT_TRANSFER 
+                        +REGEX+netID                //network id
+                        +REGEX+netPORT
+                        +REGEX+peer.getID()         //successor ID (the one who keeps the file)
+                        +REGEX+peer.getPort()
+                        +REGEX+fileID,              //file ID
+                        InetAddress.getLocalHost(), requestPORT); //send to the one who requests/retrieves the file
+*/
+                }
+                else{
+                    peer.getOutgoing().send(RETRIEVE
+                        +REGEX+netID                //network ID
+                        +REGEX+netPORT
+                        +REGEX+requestID            //request ID
+                        +REGEX+requestPORT
+                        +REGEX+fileID,              //file ID
+                        InetAddress.getLocalHost(), peer.getSuccessorPort()); //send to successor
+
+                } 
+            }
+        }
+       
     }
 
     private static void printStatus(PeerConnection peer) {

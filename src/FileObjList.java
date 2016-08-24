@@ -56,6 +56,23 @@ public class FileObjList extends ArrayList<FileObj> implements Serializable{
         return null;
     }
     
+    FileObj copyFile(int fileID) {
+        
+        FileObj file = null;
+        Iterator<FileObj> it = this.iterator();
+        
+        while(it.hasNext()){
+            file = it.next();
+            if(file.getID() == fileID){
+               //it.remove();
+               break;
+            }
+        }
+        
+        return file;
+        
+    }        
+    
     FileObj getFile(int fileID) {//to publish file
         
         FileObj file = null;

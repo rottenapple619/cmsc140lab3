@@ -26,4 +26,8 @@ public interface Messages {
     
     public static final String FILESNETWORK = "FILESNETWORK";
     public static final String FILE = "FILE";
+    
+    public static final String RETRIEVE = "RETRIEVE";
+    
+    public static final String INIT_TRANSFER = "INITTRANSFER";
 }
