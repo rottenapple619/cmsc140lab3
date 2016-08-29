@@ -69,7 +69,7 @@ public class PeerConnection extends Node{
     }
 
     
-    void openObjSender(String type,int rID, int rPORT, int fID) {
+    /*void openObjSender(String type,int rID, int rPORT, int fID) {
         FileObj file = null;
         if(type.equalsIgnoreCase(Messages.RETRIEVE)){
             file = this.getFilesInNetwork().copyFile(fID);
@@ -81,7 +81,7 @@ public class PeerConnection extends Node{
         }
         
         objSender.startSending();
-    }
+    }*/
 
 //    private FileObj getFile(int fileID) {
 //        FileObj file = null;
@@ -140,6 +140,8 @@ public class PeerConnection extends Node{
 //        }
 //        return null;
 //    }
+
+    
     
         
     

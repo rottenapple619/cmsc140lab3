@@ -51,8 +51,8 @@ class ObjReceiver extends Thread{
             System.out.println("Receiving file(s) from: "+senderID+" completed.");
             
             if(this.transferType.equalsIgnoreCase(Messages.PUBLISH)){
-                node.getFilesInNetwork().addToList(f);
-            //node.addToNetworkFiles(f);
+            //    node.getFilesInNetwork().addToList(f);
+            
                 Connections.getConnection().getMulticastConnection().getOutgoing().send(Messages.PUBLISH//broadcast to Multicast Network
                 +Messages.REGEX+node.getID()                                                            //that a new file is published
                 +Messages.REGEX+node.getPort()

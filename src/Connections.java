@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,14 +31,14 @@ public class Connections {
     private static ArrayList<Initiator> initiatorList;
     private static ArrayList<PeerConnection> peerConnectionList;
     private static FileObjList filesLocal;
-    private static FileObjectList cacheOfNetworkFiles;
+    private static HashMap<Integer,Integer> cacheOfNetworkFiles;
     
     Connections(){
         ID = getRandomID();
         initiatorList = new ArrayList<>();
         peerConnectionList = new ArrayList<>();
         filesLocal = new FileObjList();
-        cacheOfNetworkFiles = new FileObjectList();
+        cacheOfNetworkFiles = new HashMap();
         
         try {
             addressID = InetAddress.getLocalHost().getHostAddress(); //this should be the one being used as ID
@@ -137,7 +138,7 @@ public class Connections {
         return filesLocal;
     }
     
-    FileObjectList getCachedNetworkFiles(){
+    HashMap getCachedNetworkFiles(){
         return cacheOfNetworkFiles;
     }
     

@@ -28,6 +28,7 @@ public interface Messages {
     public static final String FILE = "FILE";
     
     public static final String RETRIEVE = "RETRIEVE";
+    public static final String DELETEFILEPUBLISHER = "DELFILEPUB";
     
     public static final String INIT_TRANSFER = "INITTRANSFER";
 }

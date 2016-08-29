@@ -3,6 +3,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import javax.swing.JFileChooser;
 
 /*
@@ -37,8 +40,8 @@ public class MulticastProtocol {
         
         /*********************** RECEIVED PUBLISH MSG ************************/
         if(msg[0].equalsIgnoreCase(Messages.PUBLISH)){
-            int publisherID = Integer.parseInt(msg[1]);            
-            int publisherPORT = Integer.parseInt(msg[2]);            
+            int referencedID = Integer.parseInt(msg[1]);            
+            int referencedPORT = Integer.parseInt(msg[2]);            
             int netID = Integer.parseInt(msg[3]);
             int netPORT = Integer.parseInt(msg[4]);
             String fileName = msg[5];
@@ -48,7 +51,7 @@ public class MulticastProtocol {
             System.out.println("FILE PUBLISHED TO THE P2P NETWORK: "+netID+"@"+netPORT
                     +"\nFileID: "+fileID
                     +"\nFilename: '"+fileName+"'"
-                    +"\nKept by: "+publisherID+"@"+publisherPORT);
+                    +"\nRegistered to: "+referencedID+"@"+referencedPORT);
             System.out.println();
         }
     }
@@ -139,7 +142,7 @@ public class MulticastProtocol {
             if(actionTaken == JFileChooser.APPROVE_OPTION){
                 file = fc.getSelectedFile();
                 fileObj = new FileObj(file,initiatorID);
-                peer.getFilesToPublish().add(fileObj);
+                peer.getFilesInNetwork().put(fileObj.getID(), fileObj);
             }
             else{
                 System.err.println("Publication aborted.");
@@ -157,48 +160,49 @@ public class MulticastProtocol {
                 +Messages.REGEX+initiatorPort
                 +Messages.REGEX+peer.getID()        //publisher ID
                 +Messages.REGEX+peer.getPort()
-                +Messages.REGEX+fileObj.getID(),    //file ID
+                +Messages.REGEX+fileObj.getID()     //file ID
+                +Messages.REGEX+fileObj.getName(),  //file Name  
                 InetAddress.getLocalHost(), initiatorPort);
             
         }
         /*********************** R  E  T  R  I  E  V  E ************************/
-        else if(command.startsWith("RETRIEVE")||command.startsWith("retrieve")){
-            int fileID;
-            int initiatorID;
-            int initiatorPort;
-            PeerConnection peer;
-            try{
-                fileID = Integer.parseInt(command.substring(command.indexOf(" ")+1,command.lastIndexOf(" ")));
-                initiatorID = Integer.parseInt(command.substring(command.lastIndexOf(" ")+1,command.indexOf("@")));
-                initiatorPort = Integer.parseInt(command.substring(command.indexOf("@")+1));
-                peer = Connections.getConnection().getPeerConnection(initiatorID);
-            }catch(StringIndexOutOfBoundsException | NumberFormatException ex){
-                System.err.println("Invalid address");
-                return;
-            }
-            
-            if(peer==null){
-                System.err.println("Not connected to "+initiatorID+"@"+initiatorPort);
-                return;
-            }
-            
-            System.out.println();
-            System.out.println("RETRIEVING A FILE IN THE P2P NETWORK: "+initiatorID+"@"+initiatorPort
-                + "\nFileID: "+fileID
-                /*+ "\nFilename: '"+file.getName()+"'"*/
-                + "\nRequested by: "+peer.getID()+"@"+peer.getPort()+"(You)");
-            System.out.println();
-            
-            peer.getOutgoing().send(Messages.RETRIEVE
-                    +Messages.REGEX+initiatorID
-                    +Messages.REGEX+initiatorPort
-                    +Messages.REGEX+peer.getID()
-                    +Messages.REGEX+peer.getPort()
-                    +Messages.REGEX+fileID,
-                InetAddress.getLocalHost(), initiatorPort);
-            
-            
-        }
+//        else if(command.startsWith("RETRIEVE")||command.startsWith("retrieve")){
+//            int fileID;
+//            int initiatorID;
+//            int initiatorPort;
+//            PeerConnection peer;
+//            try{
+//                fileID = Integer.parseInt(command.substring(command.indexOf(" ")+1,command.lastIndexOf(" ")));
+//                initiatorID = Integer.parseInt(command.substring(command.lastIndexOf(" ")+1,command.indexOf("@")));
+//                initiatorPort = Integer.parseInt(command.substring(command.indexOf("@")+1));
+//                peer = Connections.getConnection().getPeerConnection(initiatorID);
+//            }catch(StringIndexOutOfBoundsException | NumberFormatException ex){
+//                System.err.println("Invalid address");
+//                return;
+//            }
+//            
+//            if(peer==null){
+//                System.err.println("Not connected to "+initiatorID+"@"+initiatorPort);
+//                return;
+//            }
+//            
+//            System.out.println();
+//            System.out.println("RETRIEVING A FILE IN THE P2P NETWORK: "+initiatorID+"@"+initiatorPort
+//                + "\nFileID: "+fileID
+//                /*+ "\nFilename: '"+file.getName()+"'"*/
+//                + "\nRequested by: "+peer.getID()+"@"+peer.getPort()+"(You)");
+//            System.out.println();
+//            
+//            peer.getOutgoing().send(Messages.RETRIEVE
+//                    +Messages.REGEX+initiatorID
+//                    +Messages.REGEX+initiatorPort
+//                    +Messages.REGEX+peer.getID()
+//                    +Messages.REGEX+peer.getPort()
+//                    +Messages.REGEX+fileID,
+//                InetAddress.getLocalHost(), initiatorPort);
+//            
+//            
+//        }
         /*********************** D  E   L   E   T   E ************************/
         else if(command.startsWith("DELETE")||command.startsWith("delete")){
             int fileID;
@@ -220,80 +224,67 @@ public class MulticastProtocol {
                 return;
             }
 
-            if(peer.getID()==initiatorID && peer.getPredecessorID()==0){//initiator at initial state (successor == self)
-                FileObj file;
-                if((file = peer.getFilesInNetwork().removeFromList(fileID)) != null){//successful delete
-                    System.out.println();
-                    System.out.println("DELETING A FILE IN THE P2P NETWORK: "+initiatorID+"@"+initiatorPort
-                        + "\nFileID: "+fileID
-                        + "\nFilename: '"+file.getName()+"'"
-                        + "\nDeleted by: "+peer.getID()+"@"+peer.getPort()+"(You)");
-                    System.out.println();
-                }
-                else{
-                    System.out.println();
-                    System.out.println("FAILED TO DELETE A FILE IN THE P2P NETWORK: "+initiatorID+"@"+initiatorPort
-                        +"\nFileID: "+fileID
-                        +"\nMessage from: "+peer.getID()+"@"+peer.getPort()+"(You)");
-                    System.out.println();
-                }
-            }
-            else{
-                peer.getOutgoing().send(Messages.DELETE
-                    +Messages.REGEX+initiatorID
-                    +Messages.REGEX+initiatorPort
-                    +Messages.REGEX+peer.getID()
-                    +Messages.REGEX+peer.getPort()
-                    +Messages.REGEX+fileID,
+            System.out.println();
+            System.out.println("DELETING A FILE TO THE P2P NETWORK: "+initiatorID+"@"+initiatorPort
+                    +"\nFileID: "+fileID);
+//                    +"\nFilename : '"+fileObj.getName()+"'");
+            System.out.println();
+            
+            peer.getOutgoing().send(Messages.DELETE //send a delete msg to the initiator
+                +Messages.REGEX+initiatorID
+                +Messages.REGEX+initiatorPort
+                +Messages.REGEX+peer.getID()
+                +Messages.REGEX+peer.getPort()
+                +Messages.REGEX+fileID,
                 InetAddress.getLocalHost(), initiatorPort);
-            }
         }
-        /*********************** F I L E S K E P T ************************/
-        else if(command.startsWith("FILESKEPT")||command.startsWith("fileskept")){
-            int initiatorID;
-            int initiatorPort;
-            PeerConnection peer;
-            try{
-                initiatorID = Integer.parseInt(command.substring(10,command.indexOf("@")));
-                initiatorPort = Integer.parseInt(command.substring(command.indexOf("@")+1));
-                peer = Connections.getConnection().getPeerConnection(initiatorID);
-            }catch(StringIndexOutOfBoundsException | NumberFormatException ex){
-                System.err.println("Invalid address");
-                return;
-            }
-            
-            if(peer==null){
-                System.err.println("Not connected to "+initiatorID+"@"+initiatorPort);
-                return;
-            }
-            
-            if(peer.getFilesInNetwork().isEmpty()){
-                System.out.println("There are no files that you keep for the P2P network: "+initiatorID+"@"+initiatorPort);
-            }
-            else{
-                System.out.println();
-                System.out.println("FILE(S) YOU KEEP: "+peer.getFilesInNetwork().size()+" FOR THE P2P NETWORK: "+initiatorID+"@"+initiatorPort);
-                for(FileObj file : peer.getFilesInNetwork()){
-                    System.out.println("ID: "+file.getID()+" Filename: "+file.getName());
-                }
-                System.out.println();
-            }
-            
-        }
-        /*********************** F I L E S L O C A L ************************/
-        else if(command.equalsIgnoreCase(Command.FILESLOCAL.toString())){
-            if(Connections.getConnection().getLocalFiles().isEmpty()){
-                System.out.println("Local files empty.");
-            }
-            else{
-                System.out.println();
-                System.out.println("LOCAL FILE(S): "+Connections.getConnection().getLocalFiles().size());
-                for(FileObj file : Connections.getConnection().getLocalFiles()){
-                    System.out.println("ID: "+file.getID()+" Filename: "+file.getName());
-                }
-                System.out.println();
-            }
-        }
+        
+//        /*********************** F I L E S K E P T ************************/
+//        else if(command.startsWith("FILESKEPT")||command.startsWith("fileskept")){
+//            int initiatorID;
+//            int initiatorPort;
+//            PeerConnection peer;
+//            try{
+//                initiatorID = Integer.parseInt(command.substring(10,command.indexOf("@")));
+//                initiatorPort = Integer.parseInt(command.substring(command.indexOf("@")+1));
+//                peer = Connections.getConnection().getPeerConnection(initiatorID);
+//            }catch(StringIndexOutOfBoundsException | NumberFormatException ex){
+//                System.err.println("Invalid address");
+//                return;
+//            }
+//            
+//            if(peer==null){
+//                System.err.println("Not connected to "+initiatorID+"@"+initiatorPort);
+//                return;
+//            }
+//            
+//            if(peer.getFilesInNetwork().isEmpty()){
+//                System.out.println("There are no files that you keep for the P2P network: "+initiatorID+"@"+initiatorPort);
+//            }
+//            else{
+//                System.out.println();
+//                System.out.println("FILE(S) YOU KEEP: "+peer.getFilesInNetwork().size()+" FOR THE P2P NETWORK: "+initiatorID+"@"+initiatorPort);
+//                for(FileObj file : peer.getFilesInNetwork()){
+//                    System.out.println("ID: "+file.getID()+" Filename: "+file.getName());
+//                }
+//                System.out.println();
+//            }
+//            
+//        }
+//        /*********************** F I L E S L O C A L ************************/
+//        else if(command.equalsIgnoreCase(Command.FILESLOCAL.toString())){
+//            if(Connections.getConnection().getLocalFiles().isEmpty()){
+//                System.out.println("Local files empty.");
+//            }
+//            else{
+//                System.out.println();
+//                System.out.println("LOCAL FILE(S): "+Connections.getConnection().getLocalFiles().size());
+//                for(FileObj file : Connections.getConnection().getLocalFiles()){
+//                    System.out.println("ID: "+file.getID()+" Filename: "+file.getName());
+//                }
+//                System.out.println();
+//            }
+//        }
         /*********************** F I L E S N E T W O R K ************************/ 
         else if(command.startsWith("FILESNETWORK")||command.startsWith("filesnetwork")){
             int initiatorID;
@@ -313,30 +304,31 @@ public class MulticastProtocol {
                 return;
             }
             
-            
-//            if(peer.getID()==initiatorID && peer.getPredecessorID()==0){//initiator at initial state (successor == self)
-//                if(peer.getFilesInNetwork().isEmpty()){
-//                    System.out.println("There are no files that you keep for the P2P network: "+initiatorID+"@"+initiatorPort);
-//                }
-//                else{
-//                    System.out.println();
-//                    System.out.println("FILES IN THE P2P NETWORK: "+initiatorID+"@"+initiatorPort);
-//                    for(FileObj file : peer.getFilesInNetwork()){
-//                        System.out.println("ID: "+file.getID()+" Filename: "+file.getName());
-//                    }
-//                    System.out.println();
-//                }
-//                return;
-//            }
-                Connections.getConnection().getCachedNetworkFiles().clear();
-            System.out.println();
-            System.out.println("FILES IN THE P2P NETWORK: "+initiatorID+"@"+initiatorPort);
-            peer.getOutgoing().send(Messages.FILESNETWORK
-                +Messages.REGEX+initiatorID
-                +Messages.REGEX+initiatorPort
-                +Messages.REGEX+peer.getID()
-                +Messages.REGEX+peer.getPort(), 
-                InetAddress.getLocalHost(), initiatorPort);
+            if(peer.getFilesInNetwork().isEmpty()){
+                System.out.println("Files empty..");
+            }
+            else{
+                System.out.println();
+                System.out.println("Files: ");
+                Iterator entries = peer.getFilesInNetwork().entrySet().iterator();
+                while (entries.hasNext()) {
+                    Entry thisEntry = (Entry) entries.next();
+                    int key = (int) thisEntry.getKey();
+                    FileObj file = (FileObj) thisEntry.getValue();
+  
+                    System.out.println("ID: "+key+" Filename: "+file.getName());
+                }
+                System.out.println();
+            }
+//            Connections.getConnection().getCachedNetworkFiles().clear();
+//            System.out.println();
+//            System.out.println("FILES IN THE P2P NETWORK: "+initiatorID+"@"+initiatorPort);
+//            peer.getOutgoing().send(Messages.FILESNETWORK
+//                +Messages.REGEX+initiatorID
+//                +Messages.REGEX+initiatorPort
+//                +Messages.REGEX+peer.getID()
+//                +Messages.REGEX+peer.getPort(), 
+//                InetAddress.getLocalHost(), initiatorPort);
         }
         /*********************** C O M M A N D ************************/
         else if(command.equalsIgnoreCase(Command.COMMAND.toString())){
@@ -351,10 +343,11 @@ public class MulticastProtocol {
             }
             System.out.println();
         }
-        /*********************** I N V A L I D ************************/
+        
         else if(command.equalsIgnoreCase(Command.EXIT.toString())){
             System.exit(0);
         }
+        /*********************** I N V A L I D ************************/
         else{
             System.err.println("Invalid command");
         }
