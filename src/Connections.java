@@ -30,12 +30,15 @@ public class Connections {
     private static ArrayList<Initiator> initiatorList;
     private static ArrayList<PeerConnection> peerConnectionList;
     private static FileObjList filesLocal;
+    private static FileObjectList cacheOfNetworkFiles;
     
     Connections(){
         ID = getRandomID();
         initiatorList = new ArrayList<>();
         peerConnectionList = new ArrayList<>();
         filesLocal = new FileObjList();
+        cacheOfNetworkFiles = new FileObjectList();
+        
         try {
             addressID = InetAddress.getLocalHost().getHostAddress(); //this should be the one being used as ID
         } catch (UnknownHostException ex) {
@@ -132,6 +135,10 @@ public class Connections {
 
     FileObjList getLocalFiles(){
         return filesLocal;
+    }
+    
+    FileObjectList getCachedNetworkFiles(){
+        return cacheOfNetworkFiles;
     }
     
 }

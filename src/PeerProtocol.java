@@ -212,17 +212,18 @@ public class PeerProtocol implements Messages{
             
         }
         else if(msg[0].equalsIgnoreCase(READYTOPUBLISH)){
-            int netID = Integer.parseInt(msg[1]);
-            int netPORT = Integer.parseInt(msg[2]);
+            String transferType = msg[1];
+            int netID = Integer.parseInt(msg[2]);
+            int netPORT = Integer.parseInt(msg[3]);
             
-            int senderID  = Integer.parseInt(msg[3]);
-            int senderPORT = Integer.parseInt(msg[4]);
+            int senderID  = Integer.parseInt(msg[4]);
+            int senderPORT = Integer.parseInt(msg[5]);
             
-            int objPORT = Integer.parseInt(msg[5]);
-            //int fileID = Integer.parseInt(msg[6]);
+            int objPORT = Integer.parseInt(msg[6]);
+            //int fileID = Integer.parseInt(msg[7]);
             
             PeerConnection peer = Connections.getConnection().getPeerConnection(netID);
-            peer.openObjReceiver(senderID,senderPORT,objPORT); 
+            peer.openObjReceiver(transferType,senderID,senderPORT,objPORT); 
         }
         else if(msg[0].equalsIgnoreCase(DELETE)){
             int netID = Integer.parseInt(msg[1]);
@@ -429,9 +430,14 @@ public class PeerProtocol implements Messages{
             
             PeerConnection peer = Connections.getConnection().getPeerConnection(netID);
             
-            System.out.println("FileID: "+fileID
-                            +" Filename: "+fileName
-                            +" Kept by: "+senderID+"@"+senderPORT);
+            if(!Connections.getConnection().getCachedNetworkFiles().containsKey(fileID)){
+                System.out.println("FileID: "+fileID
+                                +" Filename: "+fileName
+                                +" Kept by: "+senderID+"@"+senderPORT);
+                Connections.getConnection().getCachedNetworkFiles().put(fileID, senderID);
+            }
+            
+                
         }
         
         else if(msg[0].equalsIgnoreCase(Messages.RETRIEVE)){
@@ -464,7 +470,12 @@ public class PeerProtocol implements Messages{
             else{//P2P Network in populated state
                 if((fileID > peer.getID() && fileID <= peer.getSuccessorID()) //amazing Lyle
                     || (peer.getID() > peer.getSuccessorID() && (fileID > peer.getID() || fileID < peer.getSuccessorID()))){
-                    peer.openObjSender("RETRIEVE",requestID,requestPORT,fileID);
+                    
+                    if(peer.getID()!=requestID)
+                        peer.openObjSender("RETRIEVE",requestID,requestPORT,fileID);
+                    else{
+                        
+                    }
                     /*peer.getOutgoing().send(INIT_TRANSFER 
                         +REGEX+netID                //network id
                         +REGEX+netPORT

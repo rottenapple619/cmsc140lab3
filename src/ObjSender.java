@@ -30,8 +30,10 @@ class ObjSender extends Thread{
     private ServerSocket sSocket;
     private Socket cSocket;
     private ObjectOutput out;
+    private final String transferType;
     
-    ObjSender(PeerConnection node, int rID, int rPORT, FileObj file) {
+    ObjSender(String type,PeerConnection node, int rID, int rPORT, FileObj file) {
+        this.transferType = type;
         this.node = node;
         this.receiverID = rID;
         this.receiverPORT = rPORT;
@@ -44,6 +46,7 @@ class ObjSender extends Thread{
         try {
             sSocket = new ServerSocket(objPORT);
             node.getOutgoing().send(Messages.READYTOPUBLISH
+                    +Messages.REGEX+this.transferType
                     +Messages.REGEX+node.getInitiatorID()
                     +Messages.REGEX+node.getInitiatorPort()
                     +Messages.REGEX+node.getID()

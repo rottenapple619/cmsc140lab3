@@ -328,7 +328,7 @@ public class MulticastProtocol {
 //                }
 //                return;
 //            }
-            
+                Connections.getConnection().getCachedNetworkFiles().clear();
             System.out.println();
             System.out.println("FILES IN THE P2P NETWORK: "+initiatorID+"@"+initiatorPort);
             peer.getOutgoing().send(Messages.FILESNETWORK
