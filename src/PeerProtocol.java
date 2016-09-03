@@ -1,6 +1,8 @@
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -374,137 +376,110 @@ public class PeerProtocol implements Messages{
             System.out.println();
             System.out.println("FAILED TO DELETE A FILE IN THE P2P NETWORK: "+netID+"@"+netPORT
                     +"\nFileID: "+fileID
-                    +"\nMessage from: "+senderID+"@"+senderPORT);
-            System.err.print("\nError! File Not Found!");
+                    +"\nMessage from: "+senderID+"@"+senderPORT
+                    +"\nError! File Not Found!");
             System.out.println();
         }
         
-//        else if(msg[0].equalsIgnoreCase(FILESNETWORK)){
-//            int netID = Integer.parseInt(msg[1]);
-//            int netPORT = Integer.parseInt(msg[2]);
-//            
-//            int senderID  = Integer.parseInt(msg[3]);
-//            int senderPORT = Integer.parseInt(msg[4]);
-//            
-//            PeerConnection peer = Connections.getConnection().getPeerConnection(netID);
-//            
-//            
-//            if(senderID==peer.getID()){
-//                if(!peer.requestForFiles){
-//                    peer.requestForFiles = true;
-//                    for(FileObj file : peer.getFilesInNetwork()){
-//                        System.out.println("FileID: "+file.getID()
-//                            +" Filename: "+file.getName()
-//                            +" Kept by: "+peer.getID()+"@"+peer.getPort()+"(You)");
-//                        
-//                    }
-//                    peer.getOutgoing().send(FILESNETWORK
-//                        +REGEX+netID
-//                        +REGEX+netPORT
-//                        +REGEX+senderID
-//                        +REGEX+senderPORT, 
-//                        InetAddress.getLocalHost(), peer.getSuccessorPort());
-//                    
-//                }
-//                else{
-//                    peer.requestForFiles = false;
-//                }
-//            }
-//            else{
-//                if(netID==peer.getID() && peer.requestForFiles){
-//                    peer.requestForFiles = false;
-//                    peer.getOutgoing().send(FILESNETWORK
-//                        +REGEX+netID
-//                        +REGEX+netPORT
-//                        +REGEX+senderID
-//                        +REGEX+senderPORT, 
-//                        InetAddress.getLocalHost(), peer.getSuccessorPort());
-//                    return;
-//                }
-//                    
-//                for(FileObj file : peer.getFilesInNetwork()){
-//                    
-//                    peer.getOutgoing().send(FILE
-//                        +REGEX+netID
-//                        +REGEX+netPORT
-//                        +REGEX+peer.getID()
-//                        +REGEX+peer.getPort()
-//                        +REGEX+file.getID()
-//                        +REGEX+file.getName(), 
-//                        InetAddress.getLocalHost(), senderPORT);
-//                    
-//                }
-//                    
-//                peer.getOutgoing().send(FILESNETWORK
-//                    +REGEX+netID
-//                    +REGEX+netPORT
-//                    +REGEX+senderID
-//                    +REGEX+senderPORT, 
-//                    InetAddress.getLocalHost(), peer.getSuccessorPort());
-//                
-//                if(netID==peer.getID()){
-//                    peer.requestForFiles = true;
-//                }
-//                
-//            }
-//            
-////            if(!peer.requestForFiles){
-////                
-////                for(FileObj file : peer.getFilesInNetwork()){
-////                    if(senderID==peer.getID()){
-////                        System.out.println("FileID: "+file.getID()
-////                            +" Filename: "+file.getName()
-////                            +" Kept by: "+peer.getID()+"@"+peer.getPort()+"(You)");
-////                    }
-////                    else{
-////                        peer.getOutgoing().send(FILE
-////                            +REGEX+netID
-////                            +REGEX+netPORT
-////                            +REGEX+peer.getID()
-////                            +REGEX+peer.getPort()
-////                            +REGEX+file.getID()
-////                            +REGEX+file.getName(), 
-////                            InetAddress.getLocalHost(), senderPORT);
-////                    }
-////                }
-////                    
-////                peer.getOutgoing().send(FILESNETWORK
-////                    +REGEX+netID
-////                    +REGEX+netPORT
-////                    +REGEX+senderID
-////                    +REGEX+senderPORT, 
-////                    InetAddress.getLocalHost(), peer.getSuccessorPort());
-////                
-////                
-////                
-////                    
-////            }
-////            else{
-////                peer.requestForFiles = false;
-////            }
-//            
-//        }
-//        else if(msg[0].equalsIgnoreCase(FILE)){
-//            int netID = Integer.parseInt(msg[1]);
-//            int netPORT = Integer.parseInt(msg[2]);
-//            
-//            int senderID  = Integer.parseInt(msg[3]);
-//            int senderPORT = Integer.parseInt(msg[4]);
-//            
-//            int fileID = Integer.parseInt(msg[5]);
-//            String fileName = msg[6];
-//            
-//            PeerConnection peer = Connections.getConnection().getPeerConnection(netID);
-//            
-//            if(!Connections.getConnection().getCachedNetworkFiles().containsKey(fileID)){
-//                System.out.println("FileID: "+fileID
-//                                +" Filename: "+fileName
-//                                +" Kept by: "+senderID+"@"+senderPORT);
-//                Connections.getConnection().getCachedNetworkFiles().put(fileID, senderID);
-//            }
-//            
-//                
-//        }
+        else if(msg[0].equalsIgnoreCase(FILESNETWORK)){
+            int netID = Integer.parseInt(msg[1]);
+            int netPORT = Integer.parseInt(msg[2]);
+            
+            int senderID  = Integer.parseInt(msg[3]);
+            int senderPORT = Integer.parseInt(msg[4]);
+            
+            PeerConnection peer = Connections.getConnection().getPeerConnection(netID);
+            
+            if(peer.getPredecessorID() == 0){ //P2P Network in initial state
+                
+                Iterator entries = peer.getReferencedFiles().entrySet().iterator();
+                while (entries.hasNext()) {//iterate through the files that are registered to you
+                    Entry thisEntry = (Entry) entries.next();
+                    int key = (int) thisEntry.getKey();
+                    FileReference file = (FileReference) thisEntry.getValue();
+
+                    System.out.println("FileID: "+file.getID()
+                        +" Filename: "+file.getFileName()
+                        +" Registered to: "+peer.getID()+"@"+peer.getPort()+"(You)");
+                }//end while
+
+            }
+            else{//P2P Network in populated state
+
+                if(senderID==peer.getID()){
+                    if(!peer.requestForFiles){
+                        peer.requestForFiles = true;
+                        Iterator entries = peer.getReferencedFiles().entrySet().iterator();
+                        while (entries.hasNext()) {
+                            Entry thisEntry = (Entry) entries.next();
+                            int key = (int) thisEntry.getKey();
+                            FileReference file = (FileReference) thisEntry.getValue();
+
+                            System.out.println("FileID: "+file.getID()
+                                +" Filename: "+file.getFileName()
+                                +" Registered to: "+peer.getID()+"@"+peer.getPort()+"(You)");
+                        }//end while
+
+                        peer.getOutgoing().send(FILESNETWORK //send FILESNETWORK Message
+                            +REGEX+netID
+                            +REGEX+netPORT
+                            +REGEX+senderID
+                            +REGEX+senderPORT, 
+                            InetAddress.getLocalHost(), peer.getSuccessorPort());//sent to your SUCCESSOR
+
+                    }
+                    else{
+                        peer.requestForFiles = false;
+                    }
+                }
+                else{
+                    Iterator entries = peer.getReferencedFiles().entrySet().iterator();
+                    while (entries.hasNext()) {//iterate through the files that are registered to you
+                        Entry thisEntry = (Entry) entries.next();
+                        int key = (int) thisEntry.getKey();
+                        FileReference file = (FileReference) thisEntry.getValue();
+                        peer.getOutgoing().send(FILE    //send FILE Message
+                            +REGEX+netID                //netID
+                            +REGEX+netPORT
+                            +REGEX+peer.getID()         //your ID
+                            +REGEX+peer.getPort()
+                            +REGEX+file.getID()         //file ID
+                            +REGEX+file.getFileName(), 
+                            InetAddress.getLocalHost(), senderPORT);//sent to the one who requested the list of files in the P2P Network
+                    }//end while
+                    
+                    
+                    peer.getOutgoing().send(FILESNETWORK //send FILESNETWORK Message
+                        +REGEX+netID
+                        +REGEX+netPORT
+                        +REGEX+senderID
+                        +REGEX+senderPORT, 
+                        InetAddress.getLocalHost(), peer.getSuccessorPort());//sent to your SUCCESSOR
+                }
+
+            }
+
+            
+        }
+        else if(msg[0].equalsIgnoreCase(FILE)){
+            int netID = Integer.parseInt(msg[1]);
+            int netPORT = Integer.parseInt(msg[2]);
+            
+            int senderID  = Integer.parseInt(msg[3]);
+            int senderPORT = Integer.parseInt(msg[4]);
+            
+            int fileID = Integer.parseInt(msg[5]);
+            String fileName = msg[6];
+            
+            PeerConnection peer = Connections.getConnection().getPeerConnection(netID);
+            
+            if(!Connections.getConnection().getCachedNetworkFiles().containsKey(fileID)){
+                System.out.println("FileID: "+fileID
+                                +" Filename: "+fileName
+                                +" Registered to: "+senderID+"@"+senderPORT);
+                Connections.getConnection().getCachedNetworkFiles().put(fileID, senderID);
+            }
+        }
 //        
 //        else if(msg[0].equalsIgnoreCase(Messages.RETRIEVE)){
 //            int netID = Integer.parseInt(msg[1]);

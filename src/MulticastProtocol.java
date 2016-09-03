@@ -152,7 +152,7 @@ public class MulticastProtocol {
             System.out.println();
             System.out.println("PUBLISHING A FILE TO THE P2P NETWORK: "+initiatorID+"@"+initiatorPort
                     +"\nFileID: "+fileObj.getID()
-                    +"\nFilename : '"+fileObj.getName()+"'");
+                    +"\nFilename : '"+fileObj.getFileName()+"'");
             System.out.println();
             
             peer.getOutgoing().send(Messages.PUBLISH
@@ -161,7 +161,7 @@ public class MulticastProtocol {
                 +Messages.REGEX+peer.getID()        //publisher ID
                 +Messages.REGEX+peer.getPort()
                 +Messages.REGEX+fileObj.getID()     //file ID
-                +Messages.REGEX+fileObj.getName(),  //file Name  
+                +Messages.REGEX+fileObj.getFileName(),  //file Name  
                 InetAddress.getLocalHost(), initiatorPort);
             
         }
@@ -271,8 +271,27 @@ public class MulticastProtocol {
 //            }
 //            
 //        }
+        
 //        /*********************** F I L E S L O C A L ************************/
+        
 //        else if(command.equalsIgnoreCase(Command.FILESLOCAL.toString())){
+          /*if(peer.getFilesInNetwork().isEmpty()){
+                System.out.println("Files empty..");
+            }
+            else{
+                System.out.println();
+                System.out.println("Files: ");
+                Iterator entries = peer.getFilesInNetwork().entrySet().iterator();
+                while (entries.hasNext()) {
+                    Entry thisEntry = (Entry) entries.next();
+                    int key = (int) thisEntry.getKey();
+                    FileObj file = (FileObj) thisEntry.getValue();
+  
+                    System.out.println("ID: "+key+" Filename: "+file.getName());
+                }
+                System.out.println();
+            }*/
+        
 //            if(Connections.getConnection().getLocalFiles().isEmpty()){
 //                System.out.println("Local files empty.");
 //            }
@@ -304,31 +323,16 @@ public class MulticastProtocol {
                 return;
             }
             
-            if(peer.getFilesInNetwork().isEmpty()){
-                System.out.println("Files empty..");
-            }
-            else{
-                System.out.println();
-                System.out.println("Files: ");
-                Iterator entries = peer.getFilesInNetwork().entrySet().iterator();
-                while (entries.hasNext()) {
-                    Entry thisEntry = (Entry) entries.next();
-                    int key = (int) thisEntry.getKey();
-                    FileObj file = (FileObj) thisEntry.getValue();
-  
-                    System.out.println("ID: "+key+" Filename: "+file.getName());
-                }
-                System.out.println();
-            }
-//            Connections.getConnection().getCachedNetworkFiles().clear();
-//            System.out.println();
-//            System.out.println("FILES IN THE P2P NETWORK: "+initiatorID+"@"+initiatorPort);
-//            peer.getOutgoing().send(Messages.FILESNETWORK
-//                +Messages.REGEX+initiatorID
-//                +Messages.REGEX+initiatorPort
-//                +Messages.REGEX+peer.getID()
-//                +Messages.REGEX+peer.getPort(), 
-//                InetAddress.getLocalHost(), initiatorPort);
+            
+            Connections.getConnection().getCachedNetworkFiles().clear();
+            System.out.println();
+            System.out.println("FILES IN THE P2P NETWORK: "+initiatorID+"@"+initiatorPort);
+            peer.getOutgoing().send(Messages.FILESNETWORK
+                +Messages.REGEX+initiatorID     //net ID
+                +Messages.REGEX+initiatorPort
+                +Messages.REGEX+peer.getID()    //your ID / request ID
+                +Messages.REGEX+peer.getPort(), 
+                InetAddress.getLocalHost(), initiatorPort); //sent to P2P network Initiator/Creator
         }
         /*********************** C O M M A N D ************************/
         else if(command.equalsIgnoreCase(Command.COMMAND.toString())){
