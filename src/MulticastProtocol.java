@@ -4,7 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 import javax.swing.JFileChooser;
 
@@ -166,43 +165,43 @@ public class MulticastProtocol {
             
         }
         /*********************** R  E  T  R  I  E  V  E ************************/
-//        else if(command.startsWith("RETRIEVE")||command.startsWith("retrieve")){
-//            int fileID;
-//            int initiatorID;
-//            int initiatorPort;
-//            PeerConnection peer;
-//            try{
-//                fileID = Integer.parseInt(command.substring(command.indexOf(" ")+1,command.lastIndexOf(" ")));
-//                initiatorID = Integer.parseInt(command.substring(command.lastIndexOf(" ")+1,command.indexOf("@")));
-//                initiatorPort = Integer.parseInt(command.substring(command.indexOf("@")+1));
-//                peer = Connections.getConnection().getPeerConnection(initiatorID);
-//            }catch(StringIndexOutOfBoundsException | NumberFormatException ex){
-//                System.err.println("Invalid address");
-//                return;
-//            }
-//            
-//            if(peer==null){
-//                System.err.println("Not connected to "+initiatorID+"@"+initiatorPort);
-//                return;
-//            }
-//            
-//            System.out.println();
-//            System.out.println("RETRIEVING A FILE IN THE P2P NETWORK: "+initiatorID+"@"+initiatorPort
-//                + "\nFileID: "+fileID
-//                /*+ "\nFilename: '"+file.getName()+"'"*/
-//                + "\nRequested by: "+peer.getID()+"@"+peer.getPort()+"(You)");
-//            System.out.println();
-//            
-//            peer.getOutgoing().send(Messages.RETRIEVE
-//                    +Messages.REGEX+initiatorID
-//                    +Messages.REGEX+initiatorPort
-//                    +Messages.REGEX+peer.getID()
-//                    +Messages.REGEX+peer.getPort()
-//                    +Messages.REGEX+fileID,
-//                InetAddress.getLocalHost(), initiatorPort);
-//            
-//            
-//        }
+        else if(command.startsWith("RETRIEVE")||command.startsWith("retrieve")){
+            int fileID;
+            int initiatorID;
+            int initiatorPort;
+            PeerConnection peer;
+            try{
+                fileID = Integer.parseInt(command.substring(command.indexOf(" ")+1,command.lastIndexOf(" ")));
+                initiatorID = Integer.parseInt(command.substring(command.lastIndexOf(" ")+1,command.indexOf("@")));
+                initiatorPort = Integer.parseInt(command.substring(command.indexOf("@")+1));
+                peer = Connections.getConnection().getPeerConnection(initiatorID);
+            }catch(StringIndexOutOfBoundsException | NumberFormatException ex){
+                System.err.println("Invalid address");
+                return;
+            }
+            
+            if(peer==null){
+                System.err.println("Not connected to "+initiatorID+"@"+initiatorPort);
+                return;
+            }
+            
+            System.out.println();
+            System.out.println("RETRIEVING A FILE IN THE P2P NETWORK: "+initiatorID+"@"+initiatorPort
+                + "\nFileID: "+fileID
+                /*+ "\nFilename: '"+file.getName()+"'"*/
+                + "\nRequested by: "+peer.getID()+"@"+peer.getPort()+"(You)");
+            System.out.println();
+            
+            peer.getOutgoing().send(Messages.RETRIEVE
+                    +Messages.REGEX+initiatorID
+                    +Messages.REGEX+initiatorPort
+                    +Messages.REGEX+peer.getID()
+                    +Messages.REGEX+peer.getPort()
+                    +Messages.REGEX+fileID,
+                InetAddress.getLocalHost(), initiatorPort);
+            
+            
+        }
         /*********************** D  E   L   E   T   E ************************/
         else if(command.startsWith("DELETE")||command.startsWith("delete")){
             int fileID;
@@ -279,7 +278,7 @@ public class MulticastProtocol {
             }
             else{
                 System.out.println();
-                System.out.println("Files: ");
+                System.out.println("Local Files: ");
                 Iterator entries = Connections.getConnection().getLocalFiles().entrySet().iterator();
                 
                 while (entries.hasNext()) {

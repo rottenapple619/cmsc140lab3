@@ -16,7 +16,6 @@ class Node{
     public boolean requestForFiles = false;
     
     private final HashMap<Integer, FileObj> filesNetwork;
-    //private final FileObjList filesToPublish;
     private final HashMap<Integer, FileReference> referencedFiles;
     
     private ObjSender objSender;
@@ -37,10 +36,8 @@ class Node{
     
     Node(boolean isServer){
 
-        //this.filesToPublish = new FileObjList();
         this.referencedFiles = new HashMap<>();
         this.filesNetwork = new HashMap<>();
-        //this.filesNetwork = new FileObjList();
         
         this.isServer = isServer;
         this.port = AvailablePort.getAvailablePort();
@@ -54,13 +51,6 @@ class Node{
         }
     }
     
-    /*FileObjList getFilesToPublish(){
-        return this.filesToPublish;
-    }
-    
-    FileObjList getFilesInNetwork(){
-        return this.filesNetwork;
-    }*/
     HashMap getReferencedFiles(){
         return this.referencedFiles;
     }
@@ -171,7 +161,7 @@ class Node{
             System.out.println();
             System.out.print("A file has been DELETED to you for the P2P Network: " +this.initiatorID +"@"+ this.initiatorPort +"\n"+
                 "FileID: "+r.getID()+ "\n"+
-                "FileName: "+r.getName()+ "\n"+
+                "FileName: "+r.getFileName()+ "\n"+
                 "Published by: "+this.getID()+"@"+this.getPort());
             System.out.print("(You)\n");
             

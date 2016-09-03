@@ -25,7 +25,7 @@ public class FileObj implements Serializable{
         this.initiatorID = initiatorID;
     }
 
-    String getName() {
+    String getFileName() {
         return this.file.getName();
     }
     

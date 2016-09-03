@@ -64,24 +64,25 @@ public class PeerConnection extends Node{
     }
 
     void openObjReceiver(String type, int sID, int sPORT, int objPORT) {
-        objReceiver = new ObjReceiver(type, this, sID,sPORT,objPORT);
+        objReceiver = new ObjReceiver(type, this, sID, sPORT, objPORT);
         objReceiver.startReceiving();
     }
 
     
-    /*void openObjSender(String type,int rID, int rPORT, int fID) {
+    void openObjSender(String type,int rID, int rPORT, int fID) {
         FileObj file = null;
+        
         if(type.equalsIgnoreCase(Messages.RETRIEVE)){
-            file = this.getFilesInNetwork().copyFile(fID);
-            objSender = new ObjSender(Messages.RETRIEVE,this, rID, rPORT, file);
+            file = (FileObj) this.getFilesInNetwork().get(fID);
+            objSender = new ObjSender(Messages.RETRIEVE, this, rID, rPORT, file);
         }
-        else if(type.equalsIgnoreCase(Messages.PUBLISH)){
+        /*else if(type.equalsIgnoreCase(Messages.PUBLISH)){
             file = this.getFilesToPublish().getFile(fID);
-            objSender = new ObjSender(Messages.PUBLISH,this, rID, rPORT, file);
-        }
+            objSender = new ObjSender(Messages.PUBLISH, this, rID, rPORT, file);
+        }*/
         
         objSender.startSending();
-    }*/
+    }
 
 //    private FileObj getFile(int fileID) {
 //        FileObj file = null;
