@@ -272,38 +272,26 @@ public class MulticastProtocol {
 //            
 //        }
         
-//        /*********************** F I L E S L O C A L ************************/
-        
-//        else if(command.equalsIgnoreCase(Command.FILESLOCAL.toString())){
-          /*if(peer.getFilesInNetwork().isEmpty()){
+        /*********************** F I L E S L O C A L ************************/
+        else if(command.equalsIgnoreCase(Command.FILESLOCAL.toString())){
+          if(Connections.getConnection().getLocalFiles().isEmpty()){
                 System.out.println("Files empty..");
             }
             else{
                 System.out.println();
                 System.out.println("Files: ");
-                Iterator entries = peer.getFilesInNetwork().entrySet().iterator();
+                Iterator entries = Connections.getConnection().getLocalFiles().entrySet().iterator();
+                
                 while (entries.hasNext()) {
                     Entry thisEntry = (Entry) entries.next();
                     int key = (int) thisEntry.getKey();
                     FileObj file = (FileObj) thisEntry.getValue();
-  
-                    System.out.println("ID: "+key+" Filename: "+file.getName());
+                    System.out.println("ID: "+key+" Filename: "+file.getFileName());
                 }
                 System.out.println();
-            }*/
-        
-//            if(Connections.getConnection().getLocalFiles().isEmpty()){
-//                System.out.println("Local files empty.");
-//            }
-//            else{
-//                System.out.println();
-//                System.out.println("LOCAL FILE(S): "+Connections.getConnection().getLocalFiles().size());
-//                for(FileObj file : Connections.getConnection().getLocalFiles()){
-//                    System.out.println("ID: "+file.getID()+" Filename: "+file.getName());
-//                }
-//                System.out.println();
-//            }
-//        }
+            }
+            
+        }
         /*********************** F I L E S N E T W O R K ************************/ 
         else if(command.startsWith("FILESNETWORK")||command.startsWith("filesnetwork")){
             int initiatorID;
