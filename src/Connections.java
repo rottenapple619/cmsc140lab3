@@ -30,15 +30,15 @@ public class Connections {
     private static MulticastConnection mcConnect = null;
     private static ArrayList<Initiator> initiatorList;
     private static ArrayList<PeerConnection> peerConnectionList;
-    private static FileObjList filesLocal;
+    private static HashMap<Integer,FileObj> filesLocal;
     private static HashMap<Integer,Integer> cacheOfNetworkFiles;
     
     Connections(){
         ID = getRandomID();
         initiatorList = new ArrayList<>();
         peerConnectionList = new ArrayList<>();
-        filesLocal = new FileObjList();
-        cacheOfNetworkFiles = new HashMap();
+        filesLocal = new HashMap<>();
+        cacheOfNetworkFiles = new HashMap<>();
         
         try {
             addressID = InetAddress.getLocalHost().getHostAddress(); //this should be the one being used as ID
@@ -134,7 +134,7 @@ public class Connections {
         return peerConnectionList;
     }
 
-    FileObjList getLocalFiles(){
+    HashMap getLocalFiles(){
         return filesLocal;
     }
     

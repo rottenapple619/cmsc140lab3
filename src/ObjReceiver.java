@@ -62,7 +62,7 @@ class ObjReceiver extends Thread{
                 +Messages.REGEX+f.getID());
             }
             else{
-                Connections.getConnection().getLocalFiles().addToList(f);
+                Connections.getConnection().getLocalFiles().put(f.getID(), f);
                 System.out.println("'"+f.getName()+"' has been retrieved and saved to local files.");
             }
             
