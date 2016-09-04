@@ -33,4 +33,6 @@ public interface Messages {
     public static final String INIT_SEND = "INITSEND";
     public static final String INIT_RECEIVE = "INITREC";
     public static final String INIT_COPY = "INITCOPY";
+    
+    public static final String TRANS_REG = "TR_REG";
 }

@@ -71,10 +71,24 @@ public class PeerProtocol implements Messages{
             
             printStatus(peer);
         }
+        else if(msg[0].equalsIgnoreCase(TRANS_REG)){
+            int netID = Integer.parseInt(msg[1]);
+            int netPORT = Integer.parseInt(msg[2]);
+            
+            int publisherID  = Integer.parseInt(msg[3]);
+            int publisherPORT = Integer.parseInt(msg[4]);
+            
+            int fileID = Integer.parseInt(msg[5]);
+            String fileName = msg[6];
+            
+            PeerConnection peer = Connections.getConnection().getPeerConnection(netID);
+            
+            peer.addToReferencedFiles(new FileReference(fileID,fileName,publisherID,publisherPORT));
+        }
         /*
             Received a FINDSUCCESSOR MESSAGE
         */
-        else if(msg[0].equalsIgnoreCase(FINDSUCCESSOR)){    //received find successor message
+        else if(msg[0].equalsIgnoreCase(FINDSUCCESSOR)){    
             
             int netID = Integer.parseInt(msg[1]);
             int netPORT = Integer.parseInt(msg[2]);
@@ -86,21 +100,45 @@ public class PeerProtocol implements Messages{
             
             PeerConnection peer = Connections.getConnection().getPeerConnection(netID);
 
-            if(peer.getPredecessorID() == 0){ //initiator in initial state
+            if(peer.getPredecessorID() == 0){ //P2P Network in initial state
                 peer.setPID(joinID);
                 peer.setPredecessorPort(joinPORT);
                 peer.setSID(joinID);
                 peer.setSuccessorPort(joinPORT);
                 peer.getOutgoing().send(TELLSUCCESSOR 
-                    +REGEX+netID                //network id
+                    +REGEX+netID                //net ID
                     +REGEX+netPORT
                     +REGEX+peer.getID()         //receiver's predecessor
                     +REGEX+peer.getPort()
                     +REGEX+peer.getID()         //receiver's successor
                     +REGEX+peer.getPort(),
                     InetAddress.getLocalHost(), joinPORT);
+                
+                //TRANSFER CUSTODY OF REGISTERED FILES//
+                Iterator entries = peer.getReferencedFiles().entrySet().iterator();
+                while (entries.hasNext()) {//iterate through the files that are registered to you
+                    Entry thisEntry = (Entry) entries.next();
+                    int key = (int) thisEntry.getKey();
+                    FileReference file = (FileReference) thisEntry.getValue();
+
+                    if((joinID>peer.getID()&&((file.getID()<peer.getID())||(file.getID()>joinID)))
+                            ||((joinID<peer.getID())&&(file.getID()>joinID))){//check if there is a registered file that will change custody
+                        
+                        peer.getOutgoing().send(TRANS_REG
+                            +REGEX+netID                         //network id
+                            +REGEX+netPORT
+                            +REGEX+file.getPublisherID()        //file publisher
+                            +REGEX+file.getPublisherPort()
+                            +REGEX+file.getID()                 //file metadata
+                            +REGEX+file.getFileName(),
+                        InetAddress.getLocalHost(), joinPORT);
+                        
+                        entries.remove();
+                    }
+                }//end while
+                
             }
-            else{//initiator in populated state
+            else{//P2P Network in populated state
                 if((joinID > peer.getID() && joinID <= peer.getSuccessorID()) //amazing Lyle
                     || (peer.getID() > peer.getSuccessorID() && (joinID > peer.getID() || joinID < peer.getSuccessorID()))){
                     peer.getOutgoing().send(TELLSUCCESSOR 
@@ -114,6 +152,29 @@ public class PeerProtocol implements Messages{
                     peer.setSID(joinID);
                     peer.setSuccessorPort(joinPORT);
                     printStatus(peer);
+                    
+                    //TRANSFER CUSTODY OF REGISTERED FILES//
+                    Iterator entries = peer.getReferencedFiles().entrySet().iterator();
+                    while (entries.hasNext()) {//iterate through the files that are registered to you
+                        Entry thisEntry = (Entry) entries.next();
+                        int key = (int) thisEntry.getKey();
+                        FileReference file = (FileReference) thisEntry.getValue();
+
+                        if((joinID>peer.getID()&&((file.getID()<peer.getID())||(file.getID()>joinID)))
+                                ||((joinID<peer.getID())&&(file.getID()>joinID))){//check if there is a registered file that will change custody
+
+                            peer.getOutgoing().send(TRANS_REG
+                                +REGEX+netID                         //network id
+                                +REGEX+netPORT
+                                +REGEX+file.getPublisherID()        //file publisher
+                                +REGEX+file.getPublisherPort()
+                                +REGEX+file.getID()                 //file metadata
+                                +REGEX+file.getFileName(),
+                            InetAddress.getLocalHost(), joinPORT);
+
+                            entries.remove();
+                        }
+                    }//end while
                 }
                 else{
                     peer.getOutgoing().send(FINDSUCCESSOR   //find successor message sent to successor
@@ -258,7 +319,7 @@ public class PeerProtocol implements Messages{
              
 
             }
-            else{
+            else{//P2P Network in populated state
                 if((fileID > peer.getID() && fileID <= peer.getSuccessorID()) //amazing Lyle
                     || (peer.getID() > peer.getSuccessorID() && (fileID > peer.getID() || fileID < peer.getSuccessorID()))){
                     
