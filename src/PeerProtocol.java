@@ -121,8 +121,8 @@ public class PeerProtocol implements Messages{
                     int key = (int) thisEntry.getKey();
                     FileReference file = (FileReference) thisEntry.getValue();
 
-                    if((joinID>peer.getID()&&((file.getID()<peer.getID())||(file.getID()>joinID)))
-                            ||((joinID<peer.getID())&&(file.getID()>joinID))){//check if there is a registered file that will change custody
+                    if(((peer.getID()<joinID) && ((joinID < file.getID()) || (file.getID()<peer.getID())))//check if there is a registered 
+                        || ((peer.getID()>joinID) && (file.getID()<peer.getID() && file.getID()>joinID))){//file that will change custody 
                         
                         peer.getOutgoing().send(TRANS_REG
                             +REGEX+netID                         //network id
@@ -160,8 +160,8 @@ public class PeerProtocol implements Messages{
                         int key = (int) thisEntry.getKey();
                         FileReference file = (FileReference) thisEntry.getValue();
 
-                        if((joinID>peer.getID()&&((file.getID()<peer.getID())||(file.getID()>joinID)))
-                                ||((joinID<peer.getID())&&(file.getID()>joinID))){//check if there is a registered file that will change custody
+                        if(((peer.getID()<joinID) && ((joinID < file.getID()) || (file.getID()<peer.getID())))//check if there is a registered 
+                            || ((peer.getID()>joinID) && (file.getID()<peer.getID() && file.getID()>joinID))){//file that will change custody 
 
                             peer.getOutgoing().send(TRANS_REG
                                 +REGEX+netID                         //network id
@@ -342,8 +342,17 @@ public class PeerProtocol implements Messages{
                                 "For the P2P Network: " +netID +"@"+ netPORT +"\n"+
                                 "FileID: "+fr.getID()+ "\n"+
                                 "FileName: "+fr.getFileName()+ "\n"+
-                                "Deleted by: "+peer.getID()+"@"+peer.getPort()+"(You)");
+                                "Deleted by: "+senderID+"@"+senderPORT);
                             System.out.println();
+                            if(peer.getID()!=senderID)//send delete confirmation to the one who requested to delete the file
+                                peer.getOutgoing().send(SUCCESSDELETE
+                                    +REGEX+netID
+                                    +REGEX+netPORT
+                                    +REGEX+peer.getID()
+                                    +REGEX+peer.getPort()
+                                    +REGEX+fr.getFileName()
+                                    +REGEX+fr.getID(),
+                                    InetAddress.getLocalHost(), senderPORT);
                         }
                         
                     }
